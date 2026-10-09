@@ -22,7 +22,7 @@ logging.basicConfig(level=logging.INFO)
 
 API_ID = 34320405
 API_HASH = "99f5d53e77d904125b35216191cfd2f5"
-BOT_TOKEN = "869821233:AAF3WcPycmdtekxZGYQN10nkO_UwUDnjYHE"
+BOT_TOKEN = "8698291233:AAFfzY_IIMOwzQ5LFcm_fSvzcaO3jR44vX8"
 MONGO_URI = "mongodb+srv://kederssllam_db_user:NqF8c0FtSCARPcNC@cluster0.hqhlnt6.mongodb.net/?appName=Cluster0"
 
 DB_CHANNEL_ID = 0
@@ -96,6 +96,6 @@ async def start_bot():
         await asyncio.sleep(3600)
 
 if __name__ == "__main__":
-    # تشغيل آمن ومتوافق مع بايثون 3.14+
+    # تشغيل آمن ونظيف تماماً
     asyncio.run(start_bot())
-        
+    
