@@ -1,9 +1,18 @@
 import asyncio
 import logging
+import sys
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 from pyrogram.errors import UserNotParticipant
 from pymongo import MongoClient
+
+# إجبار نظام asyncio على العمل بالطريقة المتوافقة مع السيرفرات الحديثة
+if sys.platform != 'win32':
+    try:
+        import uvloop
+        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    except ImportError:
+        pass
 
 logging.basicConfig(level=logging.INFO)
 
@@ -69,20 +78,20 @@ async def start_command(client, message: Message):
                     message_id=int(file_data["msg_id"])
                 )
             except Exception as e:
-                await message.reply_text("Error retrieving file from database channel.")
+                await message.reply_text("Error retrieving file.")
         else:
-            await message.reply_text("Link not found or database not configured.")
+            await message.reply_text("Link not found.")
     else:
         await message.reply_text(f"Welcome to {client.me.first_name}\nBot is running successfully.")
 
-async def main():
-    async with bot:
-        logging.info("Bot is active")
-        await asyncio.Event().wait()
+async def start_bot():
+    await bot.start()
+    logging.info("Bot is active and running...")
+    # حلقة حجز مستمرة تمنع البوت من الإغلاق متوافقة مع كل إصدارات بايثون
+    while True:
+        await asyncio.sleep(3600)
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        pass
-        
+    # تشغيل آمن ونظيف تماماً بدون الحاجة لاستدعاء loop يدوي معطل
+    asyncio.run(start_bot())
+    
