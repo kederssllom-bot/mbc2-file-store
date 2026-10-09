@@ -50,7 +50,7 @@ async def start_command(client, message: Message):
     text_parts = message.text.split(" ")
     
     if len(text_parts) > 1:
-        file_id_str = text_parts[1]
+        file_id_str = text_parts
         
         is_subscribed = await check_force_sub(client, message.from_user.id)
         if not is_subscribed:
@@ -76,6 +76,16 @@ async def start_command(client, message: Message):
     else:
         await message.reply_text(f"Welcome to {client.me.first_name}\nBot is running successfully.")
 
+async def main():
+    # تشغيل البوت يدوياً داخل الحلقة المستقلة لتفادي أخطاء بايثون 3.14
+    await bot.start()
+    logging.info("Bot is active and running successfully!")
+    while True:
+        await asyncio.sleep(3600)
+
 if __name__ == "__main__":
-    bot.run()
+    # إنشاء حلقة أحداث مخصصة وإجبار بايثون على تشغيلها
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(main())
     
