@@ -1,22 +1,10 @@
 import asyncio
 import logging
 import sys
-import nest_asyncio  # استيراد المكتبة لحل تداخل حلقات الأحداث
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 from pyrogram.errors import UserNotParticipant
 from pymongo import MongoClient
-
-# تفعيل المكتبة فوراً لحل مشكلة 'There is no current event loop'
-nest_asyncio.apply()
-
-# تهيئة نظام asyncio بالطريقة المتوافقة مع السيرفرات الحديثة
-if sys.platform != 'win32':
-    try:
-        import uvloop
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-    except ImportError:
-        pass
 
 logging.basicConfig(level=logging.INFO)
 
@@ -88,14 +76,7 @@ async def start_command(client, message: Message):
     else:
         await message.reply_text(f"Welcome to {client.me.first_name}\nBot is running successfully.")
 
-async def start_bot():
-    await bot.start()
-    logging.info("Bot is active and running...")
-    # حلقة حجز مستمرة تمنع البوت من الإغلاق
-    while True:
-        await asyncio.sleep(3600)
-
+# الطريقة الرسمية والآمنة لتشغيل Pyrogram على بايثون 3.14 بدون أي حلقة أحداث خارجية
 if __name__ == "__main__":
-    # تشغيل آمن ونظيف تماماً
-    asyncio.run(start_bot())
+    bot.run()
     
