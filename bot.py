@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import sys
 from hydrogram import Client, filters
 from hydrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 from hydrogram.errors import UserNotParticipant
@@ -13,7 +12,6 @@ API_HASH = "99f5d53e77d904125b35216191cfd2f5"
 BOT_TOKEN = "8698291233:AAFfzY_IIMOwzQ5LFcm_fSvzcaO3jR44vX8"
 MONGO_URI = "mongodb+srv://kederssllam_db_user:NqF8c0FtSCARPcNC@cluster0.hqhlnt6.mongodb.net/?appName=Cluster0"
 
-# تم ضبط إعدادات قنواتك بنجاح هنا
 DB_CHANNEL_ID = -1003921766270  
 FORCE_SUB_CHANNEL = "MBC2_MOVIE"  
 
@@ -57,7 +55,7 @@ async def start_command(client, message: Message):
         if not is_subscribed:
             btn = InlineKeyboardMarkup([
                 [InlineKeyboardButton("Join Channel / انضم للقناة", url=f"t.me/{FORCE_SUB_CHANNEL}")],
-                [InlineKeyboardButton("Try Again / حاول مجدداً", url=f"https://t.me/{client.me.username}?start={file_id_str}")]
+                [InlineKeyboardButton("Try Again / حاول مجدداً", url=f"https://t.me{client.me.username}?start={file_id_str}")]
             ])
             await message.reply_text("عذراً، يجب عليك الاشتراك في قناتنا أولاً للحصول على الفيلم.\n\nJoin our channel to get the movie.", reply_markup=btn)
             return
@@ -77,14 +75,7 @@ async def start_command(client, message: Message):
     else:
         await message.reply_text(f"Welcome to {client.me.first_name}\nBot is running successfully.")
 
-async def main():
-    await bot.start()
-    logging.info("Bot is active and running successfully!")
-    while True:
-        await asyncio.sleep(3600)
-
+# التمهيد المتوافق كلياً مع بايثون 3.14+
 if __name__ == "__main__":
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(main())
+    bot.run()
     
