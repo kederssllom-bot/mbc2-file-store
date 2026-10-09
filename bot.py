@@ -13,8 +13,9 @@ API_HASH = "99f5d53e77d904125b35216191cfd2f5"
 BOT_TOKEN = "8698291233:AAFfzY_IIMOwzQ5LFcm_fSvzcaO3jR44vX8"
 MONGO_URI = "mongodb+srv://kederssllam_db_user:NqF8c0FtSCARPcNC@cluster0.hqhlnt6.mongodb.net/?appName=Cluster0"
 
-DB_CHANNEL_ID = 0
-FORCE_SUB_CHANNEL = "none"
+# تم ضبط إعدادات قنواتك بنجاح هنا
+DB_CHANNEL_ID = -1003921766270  
+FORCE_SUB_CHANNEL = "MBC2_MOVIE"  
 
 try:
     mongo_client = MongoClient(MONGO_URI)
@@ -50,19 +51,19 @@ async def start_command(client, message: Message):
     text_parts = message.text.split(" ")
     
     if len(text_parts) > 1:
-        file_id_str = text_parts
+        file_id_str = text_parts[1]
         
         is_subscribed = await check_force_sub(client, message.from_user.id)
         if not is_subscribed:
             btn = InlineKeyboardMarkup([
-                [InlineKeyboardButton("Join Channel", url=f"t.me/{FORCE_SUB_CHANNEL}")],
-                [InlineKeyboardButton("Try Again", url=f"https://t.me{client.me.username}?start={file_id_str}")]
+                [InlineKeyboardButton("Join Channel / انضم للقناة", url=f"t.me/{FORCE_SUB_CHANNEL}")],
+                [InlineKeyboardButton("Try Again / حاول مجدداً", url=f"https://t.me/{client.me.username}?start={file_id_str}")]
             ])
-            await message.reply_text("Join our channel to get the movie.", reply_markup=btn)
+            await message.reply_text("عذراً، يجب عليك الاشتراك في قناتنا أولاً للحصول على الفيلم.\n\nJoin our channel to get the movie.", reply_markup=btn)
             return
 
         file_data = files_col.find_one({"_id": file_id_str})
-        if file_data and DB_CHANNEL_ID != 0:
+        if file_data:
             try:
                 await client.copy_message(
                     chat_id=message.chat.id,
@@ -77,14 +78,12 @@ async def start_command(client, message: Message):
         await message.reply_text(f"Welcome to {client.me.first_name}\nBot is running successfully.")
 
 async def main():
-    # تشغيل البوت يدوياً داخل الحلقة المستقلة لتفادي أخطاء بايثون 3.14
     await bot.start()
     logging.info("Bot is active and running successfully!")
     while True:
         await asyncio.sleep(3600)
 
 if __name__ == "__main__":
-    # إنشاء حلقة أحداث مخصصة وإجبار بايثون على تشغيلها
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop.run_until_complete(main())
