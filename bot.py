@@ -3,7 +3,11 @@ import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pymongo import MongoClient
+from fastapi import FastAPI
+import uvicorn
+from threading import Thread
 
+# البيانات الخاصة بك
 BOT_TOKEN = "869821233:AAF3WcPycmdtekxZGYQN10nkO_UwUDnjYHE"
 API_ID = 34320405
 API_HASH = "99f5d53e77d904125b35216191cfd2f5"
@@ -14,6 +18,13 @@ db = db_client["MBC2_Bot_DB"]
 files_collection = db["stored_files"]
 
 app = Client("mbc2_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+
+# خادم ويب وهمي لإرضاء سيرفر Render المجاني
+web_app = FastAPI()
+
+@web_app.get("/")
+def read_root():
+    return {"status": "Bot is running successfully"}
 
 @app.on_message(filters.command("start"))
 async def start_command(client, message):
@@ -48,14 +59,21 @@ async def save_file(client, message):
         ])
     )
 
-async def main():
+def run_web():
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(web_app, host="0.0.0.0", port=port)
+
+async def start_bot():
     print("⚡ البوت يبدأ التشغيل الآن...")
     await app.start()
     print("✅ البوت يعمل بنجاح ومستعد لاستقبال الملفات!")
-    # للحفاظ على السيرفر يعمل دون توقف كـ Web Service
-    while True:
-        await asyncio.sleep(3600)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # تشغيل خادم الـ Web في مسار مستقل
+    Thread(target=run_web, daemon=True).start()
+    
+    # تشغيل البوت التليجرام
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(start_bot())
+    loop.run_forever()
     
