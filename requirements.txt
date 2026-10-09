@@ -1,5 +1,4 @@
-pyrogram
+hydrogram
 tgcrypto
 pymongo
 dnspython
-nest_asyncio
