@@ -1,9 +1,9 @@
 import asyncio
 import logging
 import sys
-from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
-from pyrogram.errors import UserNotParticipant
+from hydrogram import Client, filters
+from hydrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
+from hydrogram.errors import UserNotParticipant
 from pymongo import MongoClient
 
 logging.basicConfig(level=logging.INFO)
@@ -76,7 +76,6 @@ async def start_command(client, message: Message):
     else:
         await message.reply_text(f"Welcome to {client.me.first_name}\nBot is running successfully.")
 
-# الطريقة الرسمية والآمنة لتشغيل Pyrogram على بايثون 3.14 بدون أي حلقة أحداث خارجية
 if __name__ == "__main__":
     bot.run()
     
