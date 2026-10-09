@@ -1,12 +1,16 @@
 import asyncio
 import logging
 import sys
+import nest_asyncio  # استيراد المكتبة لحل تداخل حلقات الأحداث
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 from pyrogram.errors import UserNotParticipant
 from pymongo import MongoClient
 
-# إجبار نظام asyncio على العمل بالطريقة المتوافقة مع السيرفرات الحديثة
+# تفعيل المكتبة فوراً لحل مشكلة 'There is no current event loop'
+nest_asyncio.apply()
+
+# تهيئة نظام asyncio بالطريقة المتوافقة مع السيرفرات الحديثة
 if sys.platform != 'win32':
     try:
         import uvloop
@@ -87,11 +91,11 @@ async def start_command(client, message: Message):
 async def start_bot():
     await bot.start()
     logging.info("Bot is active and running...")
-    # حلقة حجز مستمرة تمنع البوت من الإغلاق متوافقة مع كل إصدارات بايثون
+    # حلقة حجز مستمرة تمنع البوت من الإغلاق
     while True:
         await asyncio.sleep(3600)
 
 if __name__ == "__main__":
-    # تشغيل آمن ونظيف تماماً بدون الحاجة لاستدعاء loop يدوي معطل
+    # تشغيل آمن ومتوافق مع بايثون 3.14+
     asyncio.run(start_bot())
-    
+        
