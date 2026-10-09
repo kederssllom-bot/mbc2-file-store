@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import sys
 from hydrogram import Client, filters
 from hydrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 from hydrogram.errors import UserNotParticipant
@@ -12,6 +13,7 @@ API_HASH = "99f5d53e77d904125b35216191cfd2f5"
 BOT_TOKEN = "8698291233:AAFfzY_IIMOwzQ5LFcm_fSvzcaO3jR44vX8"
 MONGO_URI = "mongodb+srv://kederssllam_db_user:NqF8c0FtSCARPcNC@cluster0.hqhlnt6.mongodb.net/?appName=Cluster0"
 
+# الإعدادات الصحيحة والنهائية لقنواتك
 DB_CHANNEL_ID = -1003921766270  
 FORCE_SUB_CHANNEL = "MBC2_MOVIE"  
 
@@ -49,13 +51,14 @@ async def start_command(client, message: Message):
     text_parts = message.text.split(" ")
     
     if len(text_parts) > 1:
+        # إصلاح جلب المعرف ليعمل مع السيرفرات الحديثة بشكل سليم
         file_id_str = text_parts[1]
         
         is_subscribed = await check_force_sub(client, message.from_user.id)
         if not is_subscribed:
             btn = InlineKeyboardMarkup([
                 [InlineKeyboardButton("Join Channel / انضم للقناة", url=f"t.me/{FORCE_SUB_CHANNEL}")],
-                [InlineKeyboardButton("Try Again / حاول مجدداً", url=f"https://t.me{client.me.username}?start={file_id_str}")]
+                [InlineKeyboardButton("Try Again / حاول مجدداً", url=f"https://t.me/{client.me.username}?start={file_id_str}")]
             ])
             await message.reply_text("عذراً، يجب عليك الاشتراك في قناتنا أولاً للحصول على الفيلم.\n\nJoin our channel to get the movie.", reply_markup=btn)
             return
@@ -75,19 +78,15 @@ async def start_command(client, message: Message):
     else:
         await message.reply_text(f"Welcome to {client.me.first_name}\nBot is running successfully.")
 
-# الطريقة الإجبارية لتخطي مشاكل الحلقات في بايثون 3.14 تماماً
+# دالة التشغيل الذاتية المستقلة التي تخطت المشكلة من قبل
 async def main():
     await bot.start()
-    logging.info("Bot started successfully via absolute loop!")
-    # إبقاء البوت مستيقظاً بشكل دائم
-    await asyncio.Event().wait()
+    logging.info("Bot is active and running successfully!")
+    while True:
+        await asyncio.sleep(3600)
 
 if __name__ == "__main__":
-    try:
-        # محاولة التشغيل القياسي وإذا تعذر يتم إنشاء حلقة جديدة فوراً
-        asyncio.run(main())
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(main())
-        
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(main())
+    
