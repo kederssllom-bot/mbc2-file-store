@@ -75,7 +75,19 @@ async def start_command(client, message: Message):
     else:
         await message.reply_text(f"Welcome to {client.me.first_name}\nBot is running successfully.")
 
-# التمهيد المتوافق كلياً مع بايثون 3.14+
+# الطريقة الإجبارية لتخطي مشاكل الحلقات في بايثون 3.14 تماماً
+async def main():
+    await bot.start()
+    logging.info("Bot started successfully via absolute loop!")
+    # إبقاء البوت مستيقظاً بشكل دائم
+    await asyncio.Event().wait()
+
 if __name__ == "__main__":
-    bot.run()
-    
+    try:
+        # محاولة التشغيل القياسي وإذا تعذر يتم إنشاء حلقة جديدة فوراً
+        asyncio.run(main())
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(main())
+        
