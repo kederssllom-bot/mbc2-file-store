@@ -8,9 +8,10 @@ from pymongo import MongoClient
 
 logging.basicConfig(level=logging.INFO)
 
+# المفاتيح والبيانات الرسمية والمحدثة الخاصة بمشروعك
 API_ID = 34320405
 API_HASH = "99f5d53e77d904125b35216191cfd2f5"
-BOT_TOKEN = "8698291233:AAFfzY_IIMOwzQ5LFcm_fSvzcaO3jR44vX8"
+BOT_TOKEN = "8698291233:AAEvVnETbqJOQ-7_cHSX2MZbP8dxkywmpDo"
 MONGO_URI = "mongodb+srv://kederssllam_db_user:NqF8c0FtSCARPcNC@cluster0.hqhlnt6.mongodb.net/?appName=Cluster0"
 
 # الإعدادات الصحيحة والنهائية لقنواتك
@@ -21,7 +22,7 @@ try:
     mongo_client = MongoClient(MONGO_URI)
     db = mongo_client["FileStoreBot"]
     files_col = db["files"]
-    logging.info("MongoDB Connected")
+    logging.info("MongoDB Connected Successfully!")
 except Exception as e:
     logging.error(f"DB Error: {e}")
 
@@ -47,29 +48,29 @@ async def check_force_sub(client, user_id):
         return True
     return False
 
-# ⭐ الدالة الجديدة والمهمة جداً: استقبال الرسائل في المخزن وأرشفتها وتوليد روابط التوجيه العميق تلقائياً
+# استقبال الرسائل في المخزن وأرشفتها وتوليد الروابط تلقائياً
 @bot.on_message(filters.chat(DB_CHANNEL_ID) & (filters.document | filters.video))
 async def archive_and_link(client, message: Message):
     file_id_str = str(message.id)
     
-    # حفظ آيدي الفيلم في MongoDB
+    # حفظ آيدي الفيلم في قاعدة بيانات MongoDB
     files_col.update_one(
         {"_id": file_id_str},
         {"\$set": {"msg_id": message.id, "caption": message.caption or ""}},
         upsert=True
     )
     
-    # جلب يوزر نيم البوت وتوليد الرابط العميق للفيلم
+    # جلب يوزر نيم البوت لتوليد الرابط العميق
     bot_user = (await client.get_me()).username
-    deep_link = f"https://t.me/{bot_user}?start={file_id_str}"
+    deep_link = f"https://t.me{bot_user}?start={file_id_str}"
     
-    # إرسال الرابط كرد في قناة المخزن لنسخه ووضعه في قناة البوسترات العامة
+    # إرسال الرابط كرد على الفيلم داخل قناة المخزن
     await message.reply_text(
-        f"✅ **تمت أرشفة الفيلم بنجاح!**\n\n🔗 **رابط التوجيه العميق:**\n`{deep_link}`",
+        f"✅ **تمت أرشفة الفيلم بنجاح!**\n\n🔗 **رابط التوجيه العميق (انشره في قناة البوسترات):**\n`{deep_link}`",
         disable_web_page_preview=True
     )
 
-# معالجة أمر البداية والروابط العميقة في الخاص
+# معالجة أمر البداية والروابط العميقة في الخاص للزوار
 @bot.on_message(filters.command("start") & filters.private)
 async def start_command(client, message: Message):
     text_parts = message.text.split(" ")
@@ -77,38 +78,38 @@ async def start_command(client, message: Message):
     if len(text_parts) > 1:
         file_id_str = text_parts[1]
         
-        # التحقق من الاشتراك الإجباري
+        # التحقق من الاشتراك الإجباري قبل تسليم الفيلم
         is_subscribed = await check_force_sub(client, message.from_user.id)
         if not is_subscribed:
             btn = InlineKeyboardMarkup([
-                [InlineKeyboardButton("Join Channel / انضم للقناة", url=f"https://t.me/{FORCE_SUB_CHANNEL}")],
-                [InlineKeyboardButton("Try Again / حاول مجدداً", url=f"https://t.me/{(await client.get_me()).username}?start={file_id_str}")]
+                [InlineKeyboardButton("Join Channel / انضم للقناة 📢", url=f"https://t.me{FORCE_SUB_CHANNEL}")],
+                [InlineKeyboardButton("Try Again / حاول مجدداً 🔄", url=f"https://t.me{(await client.get_me()).username}?start={file_id_str}")]
             ])
             await message.reply_text(
-                "⚠️ **عذراً، يجب عليك الاشتراك في قناتنا أولاً للحصول على الفيلم.**\n\nJoin our channel to get the movie.", 
+                "⚠️ **عذراً عزيزي، يجب عليك الاشتراك في قناتنا أولاً لتتمكن من تحميل ومشاهدة الفيلم!**\n\nاشترك بالقناة ثم اضغط على زر (حاول مجدداً).", 
                 reply_markup=btn
             )
             return
 
-        # جلب البيانات من MongoDB
+        # جلب الفيلم من MongoDB بعد تحقق الاشتراك
         file_data = files_col.find_one({"_id": file_id_str})
         if file_data:
             try:
-                # إرسال الفيلم للمستخدم كنسخة دون إظهار القناة المخفية كـ مصدر
+                # إرسال الفيلم للمستخدم كنسخة آمنة لحماية المخزن الأصلي
                 await client.copy_message(
                     chat_id=message.chat.id,
                     from_chat_id=DB_CHANNEL_ID,
                     message_id=int(file_data["msg_id"])
                 )
             except Exception as e:
-                await message.reply_text("Error retrieving file.")
+                await message.reply_text("❌ عذراً، حدث خطأ أثناء جلب الفيلم من المخزن.")
                 logging.error(f"Copy message error: {e}")
         else:
-            await message.reply_text("Link not found.")
+            await message.reply_text("❌ هذا الرابط غير موجود أو تم حذفه.")
     else:
-        await message.reply_text(f"Welcome to {client.me.first_name}\nBot is running successfully.")
+        await message.reply_text(f"✨ مرحباً بك في بوت أرشفة وتسليم الأفلام التلقائي لشبكة {client.me.first_name}!\n\nالبوت يعمل الآن بنجاح.")
 
-# دالة التشغيل المستقرة والآمنة
+# دالة التشغيل الآمنة والمستمرة
 async def main():
     await bot.start()
     logging.info("Bot is active and running successfully!")
