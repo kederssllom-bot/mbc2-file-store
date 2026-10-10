@@ -73,8 +73,15 @@ async def check_force_sub(client, user_id):
         return True
 
 
+@bot.on_message(filters.channel, group=1)
+async def debug_channel(client, message: Message):
+    # سطر تشخيصي: بيطبع ID أي قناة البوت شايفها (بتقدر تشيله بعدين)
+    logging.info(f"CHANNEL POST | id={message.chat.id} | title={message.chat.title} | media={message.media}")
+
+
 @bot.on_message(filters.chat(DB_CHANNEL_ID) & (filters.document | filters.video))
 async def archive_and_link(client, message: Message):
+    logging.info(f"Archiving message {message.id}")
     file_id_str = str(message.id)
 
     files_col.update_one(
