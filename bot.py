@@ -8,7 +8,6 @@ from pymongo import MongoClient
 
 logging.basicConfig(level=logging.INFO)
 
-# البيانات الرسمية لمشروعك
 API_ID = 34320405
 API_HASH = "99f5d53e77d904125b35216191cfd2f5"
 BOT_TOKEN = "8698291233:AAEvVnETbqJOQ-7_cHSX2MZbP8dxkywmpDo"
@@ -32,7 +31,6 @@ bot = Client(
     bot_token=BOT_TOKEN
 )
 
-# دالة فحص الاشتراك الإجباري
 async def check_force_sub(client, user_id):
     if FORCE_SUB_CHANNEL == "none":
         return True
@@ -47,12 +45,11 @@ async def check_force_sub(client, user_id):
         return True
     return False
 
-# استقبال الرسائل في المخزن وأرشفتها وتوليد الروابط تلقائياً
 @bot.on_message(filters.chat(DB_CHANNEL_ID) & (filters.document | filters.video))
 async def archive_and_link(client, message: Message):
     file_id_str = str(message.id)
     
-    # 🛠️ تم الإصلاح هنا: إزالة رمز الهروب الخاطئ لتعمل مع الـ MongoDB بشكل سليم
+    # استخدام الصيغة المباشرة للـ MongoDB بدون أي رموز هروب
     files_col.update_one(
         {"_id": file_id_str},
         {"\$set": {"msg_id": message.id, "caption": message.caption or ""}},
@@ -67,7 +64,6 @@ async def archive_and_link(client, message: Message):
         disable_web_page_preview=True
     )
 
-# معالجة أمر البداية والروابط العميقة في الخاص للزوار
 @bot.on_message(filters.command("start") & filters.private)
 async def start_command(client, message: Message):
     text_parts = message.text.split(" ")
@@ -96,23 +92,19 @@ async def start_command(client, message: Message):
                     message_id=int(file_data["msg_id"])
                 )
             except Exception as e:
-                await message.reply_text("❌ عذراً، حدث خطأ أثناء جلب الفيلم من المخزن.")
-                logging.error(f"Copy message error: {e}")
+                await message.reply_text("❌ عذراً، حدث خطأ أثناء جلب الفيلم.")
         else:
-            await message.reply_text("❌ هذا الرابط غير موجود أو تم حذفه.")
+            await message.reply_text("❌ هذا الرابط غير موجود.")
     else:
-        await message.reply_text(f"✨ مرحباً بك في بوت أرشفة وتسليم الأفلام التلقائي لشبكة {client.me.first_name}!\n\nالبوت يعمل الآن بنجاح.")
+        await message.reply_text(f"✨ مرحباً بك في بوت أرشفة وتسليم الأفلام التلقائي!\n\nالبوت يعمل الآن بنجاح.")
 
-# دالة التشغيل الآمنة والمستمرة
-async def main():
-    async with bot:
-        logging.info("Bot is active and running successfully!")
-        await asyncio.Event().wait()
-
+# 🛠️ الحل الجذري لإنهاء مشكلة حلقة الأحداث (Event Loop) على بايثون الحديثة
 if __name__ == "__main__":
     try:
-        # 🛠️ تم الإصلاح هنا: تشغيل الحقل البرمجي باستخدام الـ Event Loop المناسب لإصلاح خطأ بايثون 3.14
-        asyncio.run(main())
+        # إجبار الكود على إنشاء وإدارة حلقة أحداث مخصصة بدون الاعتماد على الإعداد التلقائي المحظور بالسيرفر
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(bot.run())
     except KeyboardInterrupt:
         sys.exit(0)
         
