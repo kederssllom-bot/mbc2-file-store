@@ -32,6 +32,7 @@ bot = Client(
     bot_token=BOT_TOKEN
 )
 
+# دالة فحص الاشتراك الإجباري
 async def check_force_sub(client, user_id):
     if FORCE_SUB_CHANNEL == "none":
         return True
@@ -46,26 +47,54 @@ async def check_force_sub(client, user_id):
         return True
     return False
 
+# ⭐ الدالة الجديدة والمهمة جداً: استقبال الرسائل في المخزن وأرشفتها وتوليد روابط التوجيه العميق تلقائياً
+@bot.on_message(filters.chat(DB_CHANNEL_ID) & (filters.document | filters.video))
+async def archive_and_link(client, message: Message):
+    file_id_str = str(message.id)
+    
+    # حفظ آيدي الفيلم في MongoDB
+    files_col.update_one(
+        {"_id": file_id_str},
+        {"\$set": {"msg_id": message.id, "caption": message.caption or ""}},
+        upsert=True
+    )
+    
+    # جلب يوزر نيم البوت وتوليد الرابط العميق للفيلم
+    bot_user = (await client.get_me()).username
+    deep_link = f"https://t.me/{bot_user}?start={file_id_str}"
+    
+    # إرسال الرابط كرد في قناة المخزن لنسخه ووضعه في قناة البوسترات العامة
+    await message.reply_text(
+        f"✅ **تمت أرشفة الفيلم بنجاح!**\n\n🔗 **رابط التوجيه العميق:**\n`{deep_link}`",
+        disable_web_page_preview=True
+    )
+
+# معالجة أمر البداية والروابط العميقة في الخاص
 @bot.on_message(filters.command("start") & filters.private)
 async def start_command(client, message: Message):
     text_parts = message.text.split(" ")
     
     if len(text_parts) > 1:
-        # إصلاح جلب المعرف ليعمل مع السيرفرات الحديثة بشكل سليم
         file_id_str = text_parts[1]
         
+        # التحقق من الاشتراك الإجباري
         is_subscribed = await check_force_sub(client, message.from_user.id)
         if not is_subscribed:
             btn = InlineKeyboardMarkup([
-                [InlineKeyboardButton("Join Channel / انضم للقناة", url=f"t.me/{FORCE_SUB_CHANNEL}")],
-                [InlineKeyboardButton("Try Again / حاول مجدداً", url=f"https://t.me/{client.me.username}?start={file_id_str}")]
+                [InlineKeyboardButton("Join Channel / انضم للقناة", url=f"https://t.me/{FORCE_SUB_CHANNEL}")],
+                [InlineKeyboardButton("Try Again / حاول مجدداً", url=f"https://t.me/{(await client.get_me()).username}?start={file_id_str}")]
             ])
-            await message.reply_text("عذراً، يجب عليك الاشتراك في قناتنا أولاً للحصول على الفيلم.\n\nJoin our channel to get the movie.", reply_markup=btn)
+            await message.reply_text(
+                "⚠️ **عذراً، يجب عليك الاشتراك في قناتنا أولاً للحصول على الفيلم.**\n\nJoin our channel to get the movie.", 
+                reply_markup=btn
+            )
             return
 
+        # جلب البيانات من MongoDB
         file_data = files_col.find_one({"_id": file_id_str})
         if file_data:
             try:
+                # إرسال الفيلم للمستخدم كنسخة دون إظهار القناة المخفية كـ مصدر
                 await client.copy_message(
                     chat_id=message.chat.id,
                     from_chat_id=DB_CHANNEL_ID,
@@ -73,20 +102,21 @@ async def start_command(client, message: Message):
                 )
             except Exception as e:
                 await message.reply_text("Error retrieving file.")
+                logging.error(f"Copy message error: {e}")
         else:
             await message.reply_text("Link not found.")
     else:
         await message.reply_text(f"Welcome to {client.me.first_name}\nBot is running successfully.")
 
-# دالة التشغيل الذاتية المستقلة التي تخطت المشكلة من قبل
+# دالة التشغيل المستقرة والآمنة
 async def main():
     await bot.start()
     logging.info("Bot is active and running successfully!")
-    while True:
-        await asyncio.sleep(3600)
+    await asyncio.Event().wait()
 
 if __name__ == "__main__":
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(main())
-    
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        sys.exit(0)
+        
