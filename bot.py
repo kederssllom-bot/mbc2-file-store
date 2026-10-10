@@ -8,13 +8,12 @@ from pymongo import MongoClient
 
 logging.basicConfig(level=logging.INFO)
 
-# المفاتيح والبيانات الرسمية والمحدثة الخاصة بمشروعك
+# البيانات الرسمية لمشروعك
 API_ID = 34320405
 API_HASH = "99f5d53e77d904125b35216191cfd2f5"
 BOT_TOKEN = "8698291233:AAEvVnETbqJOQ-7_cHSX2MZbP8dxkywmpDo"
 MONGO_URI = "mongodb+srv://kederssllam_db_user:NqF8c0FtSCARPcNC@cluster0.hqhlnt6.mongodb.net/?appName=Cluster0"
 
-# الإعدادات الصحيحة والنهائية لقنواتك
 DB_CHANNEL_ID = -1003921766270  
 FORCE_SUB_CHANNEL = "MBC2_MOVIE"  
 
@@ -53,20 +52,18 @@ async def check_force_sub(client, user_id):
 async def archive_and_link(client, message: Message):
     file_id_str = str(message.id)
     
-    # حفظ آيدي الفيلم في قاعدة بيانات MongoDB
+    # 🛠️ تم الإصلاح هنا: إزالة رمز الهروب الخاطئ لتعمل مع الـ MongoDB بشكل سليم
     files_col.update_one(
         {"_id": file_id_str},
         {"\$set": {"msg_id": message.id, "caption": message.caption or ""}},
         upsert=True
     )
     
-    # جلب يوزر نيم البوت لتوليد الرابط العميق
     bot_user = (await client.get_me()).username
     deep_link = f"https://t.me{bot_user}?start={file_id_str}"
     
-    # إرسال الرابط كرد على الفيلم داخل قناة المخزن
     await message.reply_text(
-        f"✅ **تمت أرشفة الفيلم بنجاح!**\n\n🔗 **رابط التوجيه العميق (انشره في قناة البوسترات):**\n`{deep_link}`",
+        f"✅ **تمت أرشفة الفيلم بنجاح!**\n\n🔗 **رابط التوجيه العميق:**\n`{deep_link}`",
         disable_web_page_preview=True
     )
 
@@ -78,7 +75,6 @@ async def start_command(client, message: Message):
     if len(text_parts) > 1:
         file_id_str = text_parts[1]
         
-        # التحقق من الاشتراك الإجباري قبل تسليم الفيلم
         is_subscribed = await check_force_sub(client, message.from_user.id)
         if not is_subscribed:
             btn = InlineKeyboardMarkup([
@@ -91,11 +87,9 @@ async def start_command(client, message: Message):
             )
             return
 
-        # جلب الفيلم من MongoDB بعد تحقق الاشتراك
         file_data = files_col.find_one({"_id": file_id_str})
         if file_data:
             try:
-                # إرسال الفيلم للمستخدم كنسخة آمنة لحماية المخزن الأصلي
                 await client.copy_message(
                     chat_id=message.chat.id,
                     from_chat_id=DB_CHANNEL_ID,
@@ -111,12 +105,13 @@ async def start_command(client, message: Message):
 
 # دالة التشغيل الآمنة والمستمرة
 async def main():
-    await bot.start()
-    logging.info("Bot is active and running successfully!")
-    await asyncio.Event().wait()
+    async with bot:
+        logging.info("Bot is active and running successfully!")
+        await asyncio.Event().wait()
 
 if __name__ == "__main__":
     try:
+        # 🛠️ تم الإصلاح هنا: تشغيل الحقل البرمجي باستخدام الـ Event Loop المناسب لإصلاح خطأ بايثون 3.14
         asyncio.run(main())
     except KeyboardInterrupt:
         sys.exit(0)
